@@ -1,0 +1,200 @@
+#!/bin/bash
+while true; do
+    CHOICE=$(whiptail --title "ADMIN HELPER" --menu "Select Option " 25 78 16 \
+        "Add User" "Add a user to the system" \
+        "Modify User" "Modify an existing user"\
+        "List Users" "List all users on the system"\
+        "Add Group" "Add a group to the system" \
+        "Modify Group" "Modify a group and its list of Members" \
+        "List Groups" "List all groups on the system"\
+        "Disable User" "Disable/Lock a user account" \
+        "Enable User" "Enable user account" \
+        "Change Password" "Change user password" \
+        "Exit" "Exit "  3>&1 1>&2 2>&3)
+
+    case $CHOICE in
+        "Add User") # Add user
+            USERNAME=$(whiptail --inputbox "Enter Username:" 10 60 3>&1 1>&2 2>&3)
+            if id "$USERNAME" >/dev/null 2>&1; then
+                whiptail --msgbox "User already exists!" 10 60
+            else
+                sudo useradd $USERNAME
+            fi
+            ;;
+        "Modify User" ) # Modify an existing user
+	    USERNAME=$(whiptail --inputbox "Enter Username To Modify:" 10 60 3>&1 1>&2 2>&3)
+	    if id "$USERNAME" >/dev/null 2>&1; then
+	        OPTION=$(whiptail --menu "Please select an option to modify for $USERNAME:" 15 60 5 \
+	            "1" "Change username" \
+	            "2" "Delete user" \
+	            "3" "Change Home Directory" \
+	            "4" "Add user to group" 3>&1 1>&2 2>&3)
+	        case $OPTION in
+	            1) # Change username
+
+                                  {
+                                 for ((NEW_USERNAME = 0 ; NEW_USERNAME <= 100 ; NEW_USERNAME+=5)); do
+                                  sleep 0.1
+                                  echo $NEW_USERNAME
+                             done
+                         } | whiptail --gauge "Updating Username In Progress..." 6 50 0
+
+	                NEW_USERNAME=$(whiptail --inputbox "Please enter the new username:" 10 60 3>&1 1>&2 2>&3)
+	                sudo usermod -l $NEW_USERNAME $USERNAME
+
+	                ;;
+
+
+	            2) # Delete user
+                        sudo userdel $USERNAME
+                         {
+                                 for ((DEL_USERNAME = 0 ; DEL_USERNAME <= 100 ; DEL_USERNAME+=5)); do
+                                  sleep 0.1
+                                  echo $DEL_USERNAME
+                             done
+                         } | whiptail --gauge "Removing User In Progress..." 6 50 0
+
+
+                        DEL_USERNAME=$(whiptail --msgbox "User $USERNAME has been deleted" 10 60 3>&1 1>&2 2>&3)
+
+                        ;;
+
+	            3) # Change home directory
+
+
+                            {
+                                 for ((NEW_HOME = 0 ; NEW_HOME <= 100 ; NEW_HOME+=5)); do
+                                  sleep 0.1
+                                  echo $NEW_HOME
+                             done
+                         } | whiptail --gauge "Changing Home Directory In Progress..." 6 50 0
+
+	                NEW_HOME=$(whiptail --inputbox "Please enter the new home directory(Absolute Path):" 10 60 3>&1 1>&2 2>&3)
+	                sudo usermod -d $NEW_HOME $USERNAME
+	                ;;
+
+
+	            4) # Add user to group
+
+                                      {
+                                 for ((GROUP_NAME = 0 ; GROUP_NAME <= 100 ; GROUP_NAME+=5)); do
+                                  sleep 0.1
+                                  echo $GROUP_NAME
+                             done
+                         } | whiptail --gauge "Adding User to Group in Progress..." 6 50 0
+
+
+	                GROUP_NAME=$(whiptail --inputbox "Please enter the group name to add $USERNAME to:" 10 60 3>&1 1>&2 2>&3)
+	                sudo usermod -aG $GROUP_NAME $USERNAME
+	                ;;
+
+
+	            *) # Invalid option
+	                whiptail --msgbox "Invalid option. Please try again." 10 60
+	                ;;
+	        esac
+	    else
+	        whiptail --msgbox "User $USERNAME does not exist." 10 60
+	    fi
+	    ;;
+
+        "List Users") # List users
+            cut -d: -f1 /etc/passwd | whiptail --title "Users" --scrolltext --msgbox "$(cat)" 30 60
+            ;;
+        "Add Group") # Add group
+	    GROUPNAME=$(whiptail --inputbox "Please enter the group name:" 10 60 3>&1 1>&2 2>&3)
+	    if [ -z "$GROUPNAME" ]; then
+	        whiptail --msgbox "Group name cannot be empty." 10 60
+	    elif grep -q "^$GROUPNAME:" /etc/group; then
+	        whiptail --msgbox "Group $GROUPNAME already exists." 10 60
+	    else
+	        sudo groupadd $GROUPNAME
+	        whiptail --msgbox "Group $GROUPNAME added successfully." 10 60
+	    fi
+	    ;;
+
+        "Modify Group") # Modify group
+	    GROUPNAME=$(whiptail --inputbox "Please enter the group name:" 10 60 3>&1 1>&2 2>&3)
+	    if getent group "$GROUPNAME" >/dev/null 2>&1; then
+	        OPTION=$(whiptail --menu "Please select an option to modify for $GROUPNAME:" 15 60 5 \
+	            "1" "Change group name" \
+	            "2" "Change GID" \
+		    "3" "Delete Group" 3>&1 1>&2 2>&3)
+	        case $OPTION in
+	            1) # Change group name
+                             {
+                                 for ((NEW_GROUPNAME = 0 ; NEW_GROUPNAME <= 100 ; NEW_GROUPNAME+=5)); do
+                                  sleep 0.1
+                                  echo $NEW_GROUPNAME
+                             done
+                         } | whiptail --gauge "Changing Group Name In Progress..." 6 50 0
+
+
+	                NEW_GROUPNAME=$(whiptail --inputbox "Please enter the new group name:" 10 60 3>&1 1>&2 2>&3)
+	                sudo groupmod -n $NEW_GROUPNAME $GROUPNAME
+			whiptail --msgbox "Group name $GROUPNAME changed to $NEW_GROUPNAME" 10 60
+	                ;;
+
+
+	            2) # Change GID
+                                 {
+                                 for ((NEW_GID = 0 ; NEW_GID <= 100 ; NEW_GID+=5)); do
+                                  sleep 0.1
+                                  echo $NEW_GID
+                             done
+                         } | whiptail --gauge "Changing GID In Progress..." 6 50 0
+
+	                NEW_GID=$(whiptail --inputbox "Please enter the new GID:" 10 60 3>&1 1>&2 2>&3)
+	                sudo groupmod -g $NEW_GID $GROUPNAME
+			whiptail --msgbox "$GROUPNAME group new GID is $NEW_GID" 10 60
+	                ;;
+
+
+		    3) #Delete group
+                                {
+                                 for ((DEL_Group = 0 ; DEL_Group <= 100 ; DEL_Group+=5)); do
+                                  sleep 0.1
+                                  echo $DEL_Group
+                             done
+                         } | whiptail --gauge "Removing Group In Progress..." 6 50 0
+
+		        sudo groupdel $GROUPNAME
+		        DEL_Group=$(whiptail --msgbox "Group $GROUPNAME has been deleted." 10 60 3>&1 1>&2 2>&3)
+                        ;; 
+	            *) # Invalid option
+	                whiptail --msgbox "Invalid option. Please try again." 10 60
+	                ;;
+	        esac
+	    else
+	        whiptail --msgbox "Group $GROUPNAME does not exist." 10 60
+	    fi
+	    ;;
+
+
+        "List Groups") # List all groups
+            cut -d: -f1 /etc/group | whiptail --title "Groups" --scrolltext --msgbox "$(cat)" 30 60
+            ;;
+        "Disable User") # Disable user account
+            USERNAME=$(whiptail --inputbox "Please enter the username:" 10 60 3>&1 1>&2 2>&3)
+            sudo usermod -L $USERNAME
+	    whiptail --msgbox "User $USERNAME has been disable." 10 60
+            ;;
+        "Enable User") # Enable user account
+            USERNAME=$(whiptail --inputbox "Please enter the username:" 10 60 3>&1 1>&2 2>&3)
+            sudo usermod -U $USERNAME
+	    whiptail --msgbox "User $USERNAME has been enabled." 10 60
+            ;;
+        "Change Password") # Change user password
+            USERNAME=$(whiptail --inputbox "Please enter the username:" 10 60 3>&1 1>&2 2>&3)
+            sudo passwd $USERNAME
+	    whiptail --msgbox "Password changed successfully" 10 60
+            ;;
+       "Exit") # Exit
+            exit 0
+            ;;
+        *) # Invalid choice
+            whiptail --msgbox "Invalid choice. Please try again." 10 60
+
+	esac
+done
+
